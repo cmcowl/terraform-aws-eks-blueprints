@@ -63,9 +63,9 @@ module "eks" {
     worker = {
       instance_types = ["t3.medium"]
       
-      min_size     = 0
-      max_size     = 5
-      desired_size = 0
+      min_size     = 1
+      max_size     = 6
+      desired_size = 3
     
       block_device_mappings = {
         xvda = {
@@ -85,35 +85,35 @@ module "eks" {
       capacity_type        = "SPOT"
 
       disk_size = 50      
-      min_size     = 0
-      max_size     = 5
-      desired_size = 0
+      min_size     = 1
+      max_size     = 6
+      desired_size = 3
     }
 
     another = {
       instance_types = ["m5.large"]
 
       disk_size = 40      
-      min_size     = 0
-      max_size     = 2
-      desired_size = 0
+      min_size     = 1
+      max_size     = 6
+      desired_size = 3
     }
 
     bottlerocket = {
       ami_type = "BOTTLEROCKET_x86_64"
       capacity_type        = "SPOT"
-      min_size     = 0
-      max_size     = 2
-      desired_size = 0
+      min_size     = 1
+      max_size     = 6
+      desired_size = 3
     }
 
     bottlebig = {
       ami_type = "BOTTLEROCKET_x86_64"
       instance_types = ["m5.large"]
       capacity_type        = "SPOT"
-      min_size     = 0
-      max_size     = 1
-      desired_size = 0
+      min_size     = 1
+      max_size     = 6
+      desired_size = 3
 
       block_device_mappings = {
         xvdb = {
