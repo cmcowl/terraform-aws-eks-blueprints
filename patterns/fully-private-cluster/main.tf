@@ -63,32 +63,69 @@ module "eks" {
     worker = {
       instance_types = ["t3.medium"]
       
-      min_size     = 1
+      min_size     = 0
       max_size     = 5
-      desired_size = 2
+      desired_size = 0
+    
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 45
+            encrypted             = true
+            kms_key_id            = module.ebs_kms_key.key_arn
+          }
+        }
+      }    
+    
     }
 
     slave = {
       instance_types = ["m6a.large"]
-      use_custom_launch_template = false
+      capacity_type        = "SPOT"
 
       disk_size = 50      
-      min_size     = 1
+      min_size     = 0
       max_size     = 5
-      desired_size = 2
+      desired_size = 0
     }
 
     another = {
       instance_types = ["m5.large"]
 
       disk_size = 40      
-      min_size     = 1
-      max_size     = 5
-      desired_size = 1
+      min_size     = 0
+      max_size     = 2
+      desired_size = 0
     }
 
     bottlerocket = {
       ami_type = "BOTTLEROCKET_x86_64"
+      capacity_type        = "SPOT"
+      min_size     = 0
+      max_size     = 2
+      desired_size = 0
+    }
+
+    bottlebig = {
+      ami_type = "BOTTLEROCKET_x86_64"
+      instance_types = ["m5.large"]
+      capacity_type        = "SPOT"
+      min_size     = 0
+      max_size     = 1
+      desired_size = 0
+
+      block_device_mappings = {
+        xvdb = {
+          device_name = "/dev/xvdb"
+          ebs = {
+            volume_size           = 35
+            encrypted             = true
+            kms_key_id            = module.ebs_kms_key.key_arn
+          }
+        }
+      }    
+
     }
 
   }
@@ -163,4 +200,29 @@ module "vpc_endpoints" {
 }
 
 
+
+
+module "ebs_kms_key" {
+  source  = "terraform-aws-modules/kms/aws"
+  version = "~> 2.1"
+
+  description = "Customer managed key to encrypt EKS managed node group volumes"
+
+  # Policy
+  key_administrators = [
+    data.aws_caller_identity.current.arn
+  ]
+
+  key_service_roles_for_autoscaling = [
+    # required for the ASG to manage encrypted volumes for nodes
+    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
+    # required for the cluster / persistentvolume-controller to create encrypted PVCs
+    module.eks.cluster_iam_role_arn,
+  ]
+
+  # Aliases
+  aliases = ["eks/${local.name}/ebs"]
+
+  tags = local.tags
+}
 
