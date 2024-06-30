@@ -31,7 +31,7 @@ provider "kubernetes" {
 }
 
 locals {
-  name   = "getting-started-gitops"
+  name   = "nonp-shareservices"
   region = var.region
 
   cluster_version = var.kubernetes_version
@@ -123,7 +123,7 @@ locals {
 
   tags = {
     Blueprint  = local.name
-    GithubRepo = "github.com/aws-ia/terraform-aws-eks-blueprints"
+    GithubRepo = "github.com/sharedservices"
   }
 }
 
@@ -196,12 +196,12 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   eks_managed_node_groups = {
-    initial = {
+    worker = {
       instance_types = ["m5.large"]
-
+      capacity_type  = "SPOT"
       min_size     = 1
       max_size     = 5
-      desired_size = 3
+      desired_size = 2
     }
   }
 

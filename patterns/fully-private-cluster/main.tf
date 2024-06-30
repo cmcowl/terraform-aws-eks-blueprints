@@ -33,8 +33,12 @@ module "eks" {
   cluster_name    = local.name
   cluster_version = "1.30"
 
-  enable_cluster_creator_admin_permissions = true
 
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+  control_plane_subnet_ids = module.vpc.intra_subnets
+
+  enable_cluster_creator_admin_permissions = true
 
   # EKS Addons
   cluster_addons = {
@@ -44,6 +48,9 @@ module "eks" {
     kube-proxy = {
       most_recent = true
     }
+    eks-pod-identity-agent = {
+      most_recent = true
+    }   
     vpc-cni = {
       most_recent    = true
       before_compute = true
@@ -56,10 +63,10 @@ module "eks" {
     }
   }
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
 
   eks_managed_node_groups = {
+
+/*
     worker = {
       instance_types = ["t3.medium"]
       
@@ -106,6 +113,7 @@ module "eks" {
       max_size     = 6
       desired_size = 3
     }
+*/
 
     bottlebig = {
       ami_type = "BOTTLEROCKET_x86_64"
@@ -119,7 +127,7 @@ module "eks" {
         xvdb = {
           device_name = "/dev/xvdb"
           ebs = {
-            volume_size           = 35
+            volume_size           = 45
             encrypted             = true
             kms_key_id            = module.ebs_kms_key.key_arn
           }
@@ -132,6 +140,8 @@ module "eks" {
 
   tags = local.tags
 }
+
+
 
 ################################################################################
 # Supporting Resources
@@ -146,11 +156,12 @@ module "vpc" {
   cidr = local.vpc_cidr
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
-#  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
+  intra_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 2)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 48)]
 
-#  enable_nat_gateway = false
-#  single_nat_gateway = false
+  enable_nat_gateway = true
+  single_nat_gateway = true
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
